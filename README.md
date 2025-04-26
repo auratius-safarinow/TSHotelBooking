@@ -14,24 +14,47 @@ TSHotelBooking is a simple hotel booking API that simulates hotel bookings. The 
 
 ```plaintext
 TSHotelBooking/
-├── Controllers/
-│   └── BookingsController.cs      # API controller to handle booking requests
-├── Dtos/
-│   └── BookingDetailsDto.cs       # DTO for booking response
-├── Services/
-│   └── BookingService.cs          # Service layer for booking logic
-│   └── IBookingService.cs         # Interface for booking service
-├── Repositories/
-│   └── IBookingRepository.cs      # Interface for booking repository
-│   └── BookingRepository.cs       # In-memory booking repository implementation
-├── Models/
-│   └── Booking.cs                 # Booking model containing all booking details
-├── Middlewares/
-│   └── ExceptionMiddleware.cs     # Middleware to handle exceptions globally
-├── InMemoryDatabase.cs            # Static in-memory database for storing bookings
-├── Program.cs                     # Entry point to start the application
-├── appsettings.json               # Configuration for the application
-└── Startup.cs                     # Startup configuration
+TSHotelBooking.sln
+│
+├── TSHotelBooking.API
+│   ├── Controllers
+│   │   └── BookingsController.cs
+|   ├── Middlewares
+│   │   └── ExceptionMiddleware.cs
+│   └── Program.cs
+│   
+├── TSHotelBooking.Application
+│   ├── DTOs
+│   │   ├── BookingDetailsDto.cs
+│   │   └── BookingRequestDto.cs
+│   ├── Contracts
+│   │   └── IBookingService.cs
+│   ├── BookingService.cs
+│   └── TSHotelBooking.Application.csproj
+│
+├── TSHotelBooking.Domain
+│   ├── Entities
+│   │   ├── Booking.cs
+│   │   └── Hotel.cs
+│   ├── Contracts
+│   │   ├── IBookingRepository.cs
+│   │   └── IHotelRepository.cs
+│   ├── Common
+│   │   └── ServiceResult.cs
+│   └── TSHotelBooking.Domain.csproj
+│
+├── TSHotelBooking.Infrastructure
+│   ├── Implementations
+│   │   ├── BookingRepository.cs
+│   │   └── HotelRepository.cs
+│   ├── Data
+│   │   └── InMemoryDatabase.cs
+│   └── TSHotelBooking.Infrastructure.csproj
+└── TSHotelBooking.Test
+|   ├── Services
+|   |   └── BookingServiceTests.cs
+|   └── TSHotelBooking.Tests.csproj
+
 ```
 
 ## Setup
