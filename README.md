@@ -97,7 +97,7 @@ TSHotelBooking.sln
    **Example cURL request to create a booking**:
 
    `curl -X POST "http://localhost:5000/api/bookings" -H "Content-Type: application/json" -d '{
-     "HotelId": "H001",
+     "HotelId": 1,
      "CheckInDate": "2025-06-01",
      "CheckOutDate": "2025-06-05",
      "NumberOfGuests": 2,
@@ -123,7 +123,7 @@ Create a booking.
 
 **Request body**:
 
-`{ "HotelId": "H001", "CheckInDate": "2025-06-01", "CheckOutDate": "2025-06-05", "NumberOfGuests": 2, "GuestName": "John Doe", "GuestEmail": "john.doe@example.com" }`
+`{ "HotelId": 1, "CheckInDate": "2025-06-01", "CheckOutDate": "2025-06-05", "NumberOfGuests": 2, "GuestName": "John Doe", "GuestEmail": "john.doe@example.com" }`
 
 **Response**:
 
@@ -139,7 +139,7 @@ Retrieve booking details by reference.
 
 **Response**:
 
-`{ "guestName": "John Doe", "numberOfGuests": 2, "hotelId": "H001", "checkInDate": "2025-06-01T00:00:00", "checkOutDate": "2025-06-05T00:00:00" }`
+`{ "guestName": "John Doe", "numberOfGuests": 2, "hotelId": 1,, "hotelName": "Grand Plaza", "checkInDate": "2025-06-01T00:00:00", "checkOutDate": "2025-06-05T00:00:00" }`
 
 ---
 
