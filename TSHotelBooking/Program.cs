@@ -18,6 +18,14 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IHotelRepository, HotelRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
+//Add synchronization-related services
+builder.Services.AddScoped<IProviderApiClient, ProviderApiClient>();
+builder.Services.AddScoped<ISynchronizationService, SynchronizationService>();
+builder.Services.AddSingleton<BackgroundAvailabilitySyncService>();
+
+// Register the BackgroundService as a hosted service
+builder.Services.AddHostedService<BackgroundAvailabilitySyncService>();
+
 var app = builder.Build();
 
 // Global error handler first
