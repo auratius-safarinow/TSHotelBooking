@@ -24,20 +24,15 @@ namespace TSHotelBooking.Application.Implementations
 
         public async Task<ServiceResult<Guid>> CreateBookingAsync(BookingRequestDto request)
         {
-            if (request.CheckOutDate <= request.CheckInDate)
-                return ServiceResult<Guid>.Failure("Check-out date must be after check-in date.", 400);
-
-            if (request.NumberOfGuests <= 0)
-                return ServiceResult<Guid>.Failure("Number of guests must be greater than zero.", 400);
+            var isValid = ValidateBooking(request);
 
             var hotel = await _hotelRepository.GetHotelByIdAsync(request.HotelId);
             if (hotel == null)
                 return ServiceResult<Guid>.Failure("Hotel not found.", 404);
 
-            // Optional: Simulate unavailable dates (e.g., December is blocked)
-            if (request.CheckInDate.Month == 12 || request.CheckOutDate.Month == 12)
-                return ServiceResult<Guid>.Failure("Hotel is unavailable in December.", 409);
-
+            if (!isValid.Success) {
+                return isValid;
+            }
             var booking = new Booking
             {
                 HotelId = request.HotelId,
@@ -52,6 +47,21 @@ namespace TSHotelBooking.Application.Implementations
             await _bookingRepository.CreateBookingAsync(booking);
 
             return ServiceResult<Guid>.Ok(booking.BookingReference);
+        }
+
+        private static ServiceResult<Guid> ValidateBooking(BookingRequestDto request)
+        {
+            if (request.CheckOutDate <= request.CheckInDate)
+                return ServiceResult<Guid>.Failure("Check-out date must be after check-in date.", 400);
+
+            if (request.NumberOfGuests <= 0)
+                return ServiceResult<Guid>.Failure("Number of guests must be greater than zero.", 400);
+
+            // Optional: Simulate unavailable dates (e.g., December is blocked)
+            if (request.CheckInDate.Month == 12 || request.CheckOutDate.Month == 12)
+                return ServiceResult<Guid>.Failure("Hotel is unavailable in December.", 409);
+
+            return ServiceResult<Guid>.Ok(Guid.NewGuid());
         }
 
         public async Task<ServiceResult<Booking>> GetBookingByReferenceAsync(Guid reference)

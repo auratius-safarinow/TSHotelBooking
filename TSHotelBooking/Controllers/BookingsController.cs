@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using TSHotelBooking.Application.Contracts;
 using TSHotelBooking.Application.DTOs;
 
@@ -6,25 +7,19 @@ namespace TSHotelBooking.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BookingsController : ControllerBase
+    public class BookingsController(IBookingService bookingService) : ControllerBase
     {
-        private readonly IBookingService _bookingService;
-
-        public BookingsController(IBookingService bookingService)
-        {
-            _bookingService = bookingService;
-        }
+        private readonly IBookingService _bookingService = bookingService;
 
         [HttpPost]
-        [Route("")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequestDto request)
         {
             var result = await _bookingService.CreateBookingAsync(request);
 
             if (!result.Success)
-                return BadRequest(new { error = result.Message });
+                return StatusCode(result.StatusCode, new { error = result.Message });
 
-            return CreatedAtAction(nameof(GetBookingByReference), new { reference = result.Data }, new { reference = result.Data });
+            return StatusCode((int)HttpStatusCode.Created, new { reference = result.Data });
         }
 
         [HttpGet]
