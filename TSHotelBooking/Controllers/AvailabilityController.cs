@@ -16,9 +16,9 @@ namespace TSHotelBooking.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CachedAvailability>> GetAll()
+        public async Task<ActionResult<IEnumerable<CachedAvailability>>> GetAll(CancellationToken cancellationToken)
         {
-            var availabilities = _syncService.GetCachedAvailabilities();
+            var availabilities = await _syncService.GetCachedAvailabilities(cancellationToken);
             return Ok(availabilities);
         }
     }

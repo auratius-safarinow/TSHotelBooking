@@ -14,16 +14,17 @@ namespace TSHotelBooking.Application.Implementations
     public class BackgroundAvailabilitySyncService : BackgroundService
     {
         private readonly ILogger<BackgroundAvailabilitySyncService> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IProviderApiClient _providerApiClient;
         private readonly ConcurrentDictionary<string, CachedAvailability> _cache = new();
-        private readonly List<int> _hotelIds;
+        private readonly List<CachedAvailability> _hotelIds;
+        private readonly Random _random = new();
 
         public BackgroundAvailabilitySyncService(
             ILogger<BackgroundAvailabilitySyncService> logger,
-            IServiceScopeFactory serviceScopeFactory)
+            IProviderApiClient providerApiClient)
         {
             _logger = logger;
-            _serviceScopeFactory = serviceScopeFactory;
+            _providerApiClient = providerApiClient;
             _hotelIds = GenerateDummyHotelIds(100);
         }
 
@@ -38,58 +39,63 @@ namespace TSHotelBooking.Application.Implementations
             }
         }
 
-        private async Task SyncAvailabilityAsync(IEnumerable<int> hotelIds, CancellationToken cancellationToken)
+        private async Task SyncAvailabilityAsync(IEnumerable<CachedAvailability> hotelIds, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting sync for {Count} hotels...", hotelIds.Count());
 
             var successCount = 0;
             var failedCount = 0;
 
-            var tasks = hotelIds.Select(async hotelId =>
-            {
-                // Create a scope to resolve scoped services
-                using var scope = _serviceScopeFactory.CreateScope();
-                var providerApiClient = scope.ServiceProvider.GetRequiredService<IProviderApiClient>();
-
-                try
-                {
-                    var availability = await providerApiClient.GetAvailabilityAsync(hotelId);
-                    _cache[hotelId.ToString()] = new CachedAvailability
-                    {
-                        HotelId = availability.HotelId,
-                        AvailableRooms = availability.AvailableRooms,
-                        PricePerNight = availability.PricePerNight,
-                        LastUpdatedTimestamp = availability.LastUpdatedTimestamp
-                    };
-
-                    _logger.LogInformation("Fetched availability for hotel {HotelId}", hotelId);
-                    Interlocked.Increment(ref successCount);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error fetching availability for hotel {HotelId}", hotelId);
-                    Interlocked.Increment(ref failedCount);
-                }
-            });
+            var tasks = hotelIds.Select(hotelId => RetrieveHotelAvailabilityAsync(hotelId, successCount, failedCount));
 
             await Task.WhenAll(tasks);
 
             _logger.LogInformation("Sync completed. Success: {Success}, Failed: {Failed}", successCount, failedCount);
         }
 
-        private List<int> GenerateDummyHotelIds(int count)
+        private async Task<(int successCount, int failedCount)> RetrieveHotelAvailabilityAsync(CachedAvailability hotel, int successCount, int failedCount)
         {
-            var list = new List<int>();
+            try
+            {
+                var availability = await _providerApiClient.GetAvailabilityAsync(hotel.HotelId);
+                hotel.AvailableRooms = availability.AvailableRooms;
+                hotel.LastUpdatedTimestamp = availability.LastUpdatedTimestamp;
+
+                _cache[hotel.HotelId.ToString()] = hotel;
+
+                _logger.LogInformation("Fetched availability for hotel {HotelId}", hotel);
+                Interlocked.Increment(ref successCount);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error fetching availability for hotel {HotelId}", hotel);
+                Interlocked.Increment(ref failedCount);
+            }
+
+            return (successCount, failedCount);
+        }
+
+        private List<CachedAvailability> GenerateDummyHotelIds(int count)
+        {
+            var list = new List<CachedAvailability>();
+
             for (int i = 1; i <= count; i++)
             {
-                list.Add(i);
+                list.Add(new CachedAvailability
+                {
+                    HotelId = i,
+                    AvailableRooms = _random.Next(1, 300),
+                    PricePerNight = Math.Round((decimal)(_random.NextDouble() * 100 + 50), 2, MidpointRounding.ToEven),
+                    LastUpdatedTimestamp = DateTime.UtcNow
+                });
             }
             return list;
         }
 
-        public IEnumerable<CachedAvailability> GetCachedAvailabilities()
+        public async Task<IEnumerable<CachedAvailability>> GetCachedAvailabilities(CancellationToken cancellationToken)
         {
-            return _cache.Values.ToList();
+            await SyncAvailabilityAsync(_hotelIds, cancellationToken);
+            return _cache.Values;
         }
 
     }

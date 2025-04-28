@@ -19,7 +19,7 @@ builder.Services.AddScoped<IHotelRepository, HotelRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
 //Add synchronization-related services
-builder.Services.AddScoped<IProviderApiClient, ProviderApiClient>();
+builder.Services.AddSingleton<IProviderApiClient, ProviderApiClient>();
 builder.Services.AddScoped<ISynchronizationService, SynchronizationService>();
 builder.Services.AddSingleton<BackgroundAvailabilitySyncService>();
 

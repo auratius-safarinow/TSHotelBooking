@@ -28,7 +28,6 @@ namespace TSHotelBooking.Application.Implementations
             {
                 HotelId = hotelId,
                 AvailableRooms = _random.Next(0, 10),
-                PricePerNight = (decimal)(_random.NextDouble() * 100 + 50),
                 LastUpdatedTimestamp = DateTime.UtcNow
             };
         }
