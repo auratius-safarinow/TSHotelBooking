@@ -12,11 +12,13 @@ namespace TSHotelBooking.Application.Implementations
     {
         private readonly IProviderApiClient _providerApiClient;
         private readonly IHotelRepository _hotelRepository;
+        private readonly ILogger<SynchronizationService> _logger;
 
-        public SynchronizationService(IProviderApiClient providerApiClient, IHotelRepository hotelRepository)
+        public SynchronizationService(IProviderApiClient providerApiClient, IHotelRepository hotelRepository, ILogger<SynchronizationService> logger)
         {
             _providerApiClient = providerApiClient;
             _hotelRepository = hotelRepository;
+            _logger = logger;
         }
 
         public async Task SyncAvailabilityAsync(IEnumerable<int> hotelIdsToUpdate)
@@ -33,17 +35,30 @@ namespace TSHotelBooking.Application.Implementations
                 if (availability != null)
                 {
                     // Update local cache (or database)
-                    Console.WriteLine($"Fetched availability for {hotelId}");
+                    _logger.LogInformation("Fetched availability for hotel {HotelId}", hotelId);
                 }
                 else
                 {
-                    Console.WriteLine($"No availability found for {hotelId}");
+                    _logger.LogWarning("No availability found for hotel {HotelId}", hotelId);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching availability for {hotelId}: {ex.Message}");
+                _logger.LogError(ex, "Error fetching availability for hotel {HotelId}", hotelId);
             }
+        }
+
+        private async Task UpdateHotelAvailabilityWithRetry(int hotelId)
+        {
+            var retryPolicy = Policy
+                .Handle<Exception>()
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    (exception, timeSpan, retryCount, context) =>
+                    {
+                        _logger.LogWarning(exception, "Retry {RetryCount} for hotel {HotelId} failed.", retryCount, hotelId);
+                    });
+        
+            await retryPolicy.ExecuteAsync(() => UpdateHotelAvailability(hotelId));
         }
     }
 }
