@@ -92,6 +92,23 @@ TSHotelBooking.sln
 
 5. Test with curl or Postman.
 
+## Design Decisions
+
+- **Layered Architecture**: The project uses a clean architecture with distinct layers for API, Application, Domain, and Infrastructure.
+- **In-Memory Database**: Selected for simplicity and performance during prototyping.
+- **Background Service**: A hosted service handles synchronization with external providers every 5 minutes to ensure up-to-date availability data.
+- **Error Handling**: Centralized error handling middleware to return consistent API responses.
+
+## Assumptions
+
+- Hotel bookings are stored in memory and not persisted beyond the lifecycle of the application.
+- Availability is simulated with predefined rules (e.g., no availability in December).
+
+## Limitations
+
+- The in-memory database is not suitable for production use.
+- The project currently lacks integration with a real database or external services.
+
 ### Example Request (Create Booking)
 
 curl -X POST "http://localhost:5000/api/bookings" -H "Content-Type: application/json" -d '{
