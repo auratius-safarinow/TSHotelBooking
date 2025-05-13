@@ -103,5 +103,44 @@ namespace TSHotelBooking.Tests.Services
             result.Success.Should().BeTrue();
             result.Data.Should().NotBeEmpty();
         }
+
+        [Fact]
+        public async Task GetBooking_ShouldReturnBookingDetails()
+        {
+            // Arrange
+            var client = new TestServer(new WebHostBuilder()
+                .UseStartup<Startup>())
+                .CreateClient();
+        
+            // Act
+            var response = await client.GetAsync("/api/bookings/1");
+            response.EnsureSuccessStatusCode();
+        
+            // Assert
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().Contain("HotelId");
+        }
+
+        [Fact]
+        public void ConcurrentBookingRequests_ShouldHandleCorrectly()
+        {
+            var tasks = Enumerable.Range(0, 10).Select(async _ =>
+            {
+                var request = new BookingRequestDto
+                {
+                    HotelId = 1,
+                    CheckInDate = DateTime.Now.AddDays(1),
+                    CheckOutDate = DateTime.Now.AddDays(2),
+                    NumberOfGuests = 1,
+                    GuestName = "Concurrent User",
+                    GuestEmail = "user@example.com"
+                };
+        
+                var result = await _bookingService.CreateBookingAsync(request);
+                result.Success.Should().BeTrue();
+            });
+        
+            Task.WaitAll(tasks.ToArray());
+        }
     }
 }
